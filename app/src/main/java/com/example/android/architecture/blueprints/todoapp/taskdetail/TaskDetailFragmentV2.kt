@@ -1,86 +1,57 @@
-package com.example.android.architecture.blueprints.todoapp.taskdetail
 
+import android.app.Dialog
 import android.os.Bundle
-import android.view.*
-import android.widget.CheckBox
-import androidx.fragment.app.Fragment
-import com.example.android.architecture.blueprints.todoapp.R
-import com.example.android.architecture.blueprints.todoapp.databinding.TaskdetailFragBinding
-import com.example.android.architecture.blueprints.todoapp.util.setupSnackbar
-import com.google.android.material.snackbar.Snackbar
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.view.ViewGroup.LayoutParams.MATCH_PARENT
+import android.view.Window
+import androidx.fragment.app.DialogFragment
+import com.mysuperdispatch.android.R
+import com.mysuperdispatch.android.databinding.FragmentVerificationExpiredBinding
+import kotlinx.coroutines.flow.MutableStateFlow
 
-/**
- * Task Detail Fragment V2
- */
-class TaskDetailFragmentV2 : Fragment() {
+class VerificationExpiredFragment : DialogFragment() {
 
-    private lateinit var viewDataBinding: TaskdetailFragBinding
+  private var _binding: FragmentVerificationExpiredBinding? = null
+  private var binding: FragmentVerificationExpiredBinding?  == null
+  val actionState by lazy { MutableStateFlow(false) }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-        setupFab()
-        view()
+  override fun onDestroyView() {
+    super.onDestroyView()
+    binding = null
+  }
+
+  override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+    return super.onCreateDialog(savedInstanceState).apply {
+      requestWindowFeature(Window.FEATURE_NO_TITLE)
+    }
+  }
+
+  override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+    _binding = FragmentVerificationExpiredBinding.inflate(inflater, container, false)
+    binding = _binding
+    return binding!!.root
+  }
+
+  override fun onStart() {
+    super.onStart()
+    dialog?.window?.setLayout(MATCH_PARENT, MATCH_PARENT)
+  }
+
+  override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+    setStyle(STYLE_NORMAL, R.style.FullScreenDialog)
+  }
+
+  override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    binding?.ivClose?.setOnClickListener { dismiss() }
+    binding?.btnBecomeVerifiedCarrier?.setOnClickListener {
+      dismiss()
+      actionState.value = true
     }
 
-    private fun view() {
-        viewDataBinding.viewmodel?.let {
-            view?.setupSnackbar(this, it.snackbarMessage, Snackbar.LENGTH_LONG)
-        }
-    }
+    super.onViewCreated(view, savedInstanceState)
+  }
 
-    public fun setupFab() {
-        activity?.findViewById<View>(R.id.fab_edit_task)?.setOnClickListener {
-            viewDataBinding.viewmodel?.editTask()
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        viewDataBinding.viewmodel?.start(arguments?.getString(ARGUMENT_TASK_ID))
-    }
-
-    override fun onCreateView(
-            inflater: LayoutInflater,
-            container: ViewGroup?,
-            savedInstanceState: Bundle?
-    ): View? {
-        val view = inflater.inflate(R.layout.taskdetail_frag_v2, container, false)
-        viewDataBinding = TaskdetailFragBinding.bind(view).apply {
-            viewmodel = (activity as TaskDetailActivity).obtainViewModel()
-            listener = object : TaskDetailUserActionsListener {
-                override fun onCompleteChanged(v: View) {
-                    viewmodel?.setCompleted((v as CheckBox).isChecked)
-                }
-            }
-        }
-        viewDataBinding.setLifecycleOwner(this.viewLifecycleOwner)
-        setHasOptionsMenu(true)
-        return view
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.menu_delete -> {
-                viewDataBinding.viewmodel?.deleteTask()
-                true
-            }
-            else -> false
-        }
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        inflater.inflate(R.menu.taskdetail_fragment_menu, menu)
-    }
-
-    companion object {
-
-        const val ARGUMENT_TASK_ID = "TASK_ID"
-        const val REQUEST_EDIT_TASK = 1
-
-        fun newInstance(taskId: String) = TaskDetailFragmentV2().apply {
-            arguments = Bundle().apply {
-                putString(ARGUMENT_TASK_ID, taskId)
-            }
-        }
-    }
 }
